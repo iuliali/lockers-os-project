@@ -140,33 +140,26 @@ void init_rwlock(rwlock* lock) {
     init_sem(&lock->turnstile, 1);
 }
 
-void read(rwlock* lock) {
-    wait(&lock->turnstile);
-        wait(&lock->room_empty);
-
-        // critical section readers
-        printf("read j = %d\n", j);
-
-
-    post(&lock->turnstile);
-
-    post(&lock->room_empty);
-
-
-}
-
 void write(rwlock* lock) {
     wait(&lock->turnstile);
-    post(&lock->turnstile);
-
-    lock_lightswitch(&lock->read_switch, &lock->room_empty);
+        wait(&lock->room_empty);
         // critical section writers
         ++j;
         printf("write j = %d\n", j);
 
+    post(&lock->turnstile);
+    post(&lock->room_empty);
+}
+
+void read(rwlock* lock) {
+    wait(&lock->turnstile);
+    post(&lock->turnstile);
+
+    lock_lightswitch(&lock->read_switch, &lock->room_empty);
+        // critical section readers
+        printf("read j = %d\n", j);
+
     unlock_lightswitch(&lock->read_switch, &lock->room_empty);
-
-
 }
 
 rwlock rw = rw_init;
@@ -252,10 +245,5 @@ int main()
         pthread_join(write[mm], NULL);
     }
     printf("j = %d\n", j);
-
-
-
-
-
     return 0;
 }
